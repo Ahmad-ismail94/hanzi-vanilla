@@ -1,0 +1,3 @@
+import{discreteFrechet}from'./draw-frechet.js';export const FLEX={frechet:0.12,angleCosMin:0.6,orderTolerance:1};export const STRICT={frechet:0.08,angleCosMin:0.8,orderTolerance:0};
+function dirCos(a,b,c,d){const v1=[b[0]-a[0],b[1]-a[1]],v2=[d[0]-c[0],d[1]-c[1]];const dot=v1[0]*v2[0]+v1[1]*v2[1];const n1=Math.hypot(v1[0],v1[1])||1e-9,n2=Math.hypot(v2[0],v2[1])||1e-9;return dot/(n1*n2)}
+export function compareStroke(user,ref,tol){const df=discreteFrechet(user,ref);const a=user[0],b=user[user.length-1],c=ref[0],d=ref[ref.length-1];const cos=dirCos(a,b,c,d);let score=1-Math.min(1,df/tol.frechet);if(cos<tol.angleCosMin)score*=0.6;let verdict='wrong';if(df<=tol.frechet&&cos>=tol.angleCosMin)verdict='ok';else if(df<=tol.frechet*1.35)verdict='close';return{verdict,score}}

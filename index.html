@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Hanzi Trainer (Vanilla)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; margin:0; background:#f5f7fb; color:#0f172a}
+    header{padding:12px 16px; background:#0f172a; color:#fff; position:sticky; top:0}
+    main{padding:12px 16px; max-width:900px; margin:0 auto}
+    .grid{display:grid; gap:12px}
+    @media(min-width:800px){ .grid{grid-template-columns: 1.2fr 1fr} }
+    .card{background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px}
+    .hanzi{font-size:56px; font-weight:700}
+    .meta{display:flex; align-items:center; gap:8px; margin-top:8px}
+    .pinyin{font-size:16px; color:#334155}
+    .gloss{color:#475569; margin-top:4px}
+    .actions button{padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; margin-right:6px}
+    .board{height:46vh; border:1px dashed #cbd5e1; border-radius:12px; background:#f8fafc}
+    ul.words{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px}
+    ul.words li{background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:8px}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .footer{margin-top:16px; font-size:12px; color:#64748b}
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Hanzi Trainer</strong> — vanilla PWA (Offline)
+  </header>
+  <main>
+    <div class="grid">
+      <section class="card">
+        <div class="hanzi" id="hanzi">汉</div>
+        <div class="meta">
+          <span class="pinyin" id="pinyin">hàn</span>
+          <button id="btn-play" aria-label="Play audio">▶︎</button>
+          <button id="btn-slow" aria-label="Play slow">⟲0.85×</button>
+          <button id="btn-replay" aria-label="Replay">↺</button>
+        </div>
+        <div class="gloss" id="gloss">Chinese</div>
+        <div class="toolbar">
+          <button id="btn-guided">Guided</button>
+          <button id="btn-recall">Recall</button>
+          <button id="btn-strictness">Strictness: flex</button>
+        </div>
+        <div class="toolbar">
+          <button id="srs-again">Again</button>
+          <button id="srs-hard">Hard</button>
+          <button id="srs-good">Good</button>
+          <button id="srs-easy">Easy</button>
+        </div>
+        <div class="toolbar">
+          <button id="btn-export">Export JSON</button>
+          <label><input type="file" id="file-import" accept="application/json" /> Import JSON</label>
+        </div>
+        <div class="footer">Result: <strong id="verdict"></strong></div>
+      </section>
+      <section class="card">
+        <canvas class="board" id="board"></canvas>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:12px">
+      <h3>Words</h3>
+      <ul class="words" id="word-list"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="js/draw-rdp.js"></script>
+  <script type="module" src="js/draw-frechet.js"></script>
+  <script type="module" src="js/draw-capture.js"></script>
+  <script type="module" src="js/validate.js"></script>
+  <script type="module" src="js/srs.js"></script>
+  <script type="module" src="js/audio.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

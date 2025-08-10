@@ -1,0 +1,352 @@
+[
+  {
+    "id": "w1",
+    "simplified": "我",
+    "pinyin": "wǒ",
+    "english_gloss": "I; me",
+    "hsk_level": 1
+  },
+  {
+    "id": "w2",
+    "simplified": "你",
+    "pinyin": "nǐ",
+    "english_gloss": "you (singular)",
+    "hsk_level": 1
+  },
+  {
+    "id": "w3",
+    "simplified": "您",
+    "pinyin": "nín",
+    "english_gloss": "you (polite)",
+    "hsk_level": 2
+  },
+  {
+    "id": "w4",
+    "simplified": "他",
+    "pinyin": "tā",
+    "english_gloss": "he; him",
+    "hsk_level": 1
+  },
+  {
+    "id": "w5",
+    "simplified": "她",
+    "pinyin": "tā",
+    "english_gloss": "she; her",
+    "hsk_level": 1
+  },
+  {
+    "id": "w6",
+    "simplified": "我们",
+    "pinyin": "wǒmen",
+    "english_gloss": "we; us",
+    "hsk_level": 1
+  },
+  {
+    "id": "w7",
+    "simplified": "你们",
+    "pinyin": "nǐmen",
+    "english_gloss": "you (plural)",
+    "hsk_level": 1
+  },
+  {
+    "id": "w8",
+    "simplified": "他们",
+    "pinyin": "tāmen",
+    "english_gloss": "they; them",
+    "hsk_level": 1
+  },
+  {
+    "id": "w9",
+    "simplified": "这",
+    "pinyin": "zhè",
+    "english_gloss": "this",
+    "hsk_level": 1
+  },
+  {
+    "id": "w10",
+    "simplified": "那",
+    "pinyin": "nà",
+    "english_gloss": "that",
+    "hsk_level": 1
+  },
+  {
+    "id": "w11",
+    "simplified": "这里",
+    "pinyin": "zhèlǐ",
+    "english_gloss": "here",
+    "hsk_level": 2
+  },
+  {
+    "id": "w12",
+    "simplified": "哪里",
+    "pinyin": "nǎlǐ",
+    "english_gloss": "where",
+    "hsk_level": 1
+  },
+  {
+    "id": "w13",
+    "simplified": "是",
+    "pinyin": "shì",
+    "english_gloss": "to be",
+    "hsk_level": 1
+  },
+  {
+    "id": "w14",
+    "simplified": "不",
+    "pinyin": "bù",
+    "english_gloss": "not; no",
+    "hsk_level": 1
+  },
+  {
+    "id": "w15",
+    "simplified": "有",
+    "pinyin": "yǒu",
+    "english_gloss": "to have; there is",
+    "hsk_level": 1
+  },
+  {
+    "id": "w16",
+    "simplified": "没有",
+    "pinyin": "méiyǒu",
+    "english_gloss": "to not have",
+    "hsk_level": 1
+  },
+  {
+    "id": "w17",
+    "simplified": "在",
+    "pinyin": "zài",
+    "english_gloss": "at; in; on",
+    "hsk_level": 1
+  },
+  {
+    "id": "w18",
+    "simplified": "去",
+    "pinyin": "qù",
+    "english_gloss": "to go",
+    "hsk_level": 1
+  },
+  {
+    "id": "w19",
+    "simplified": "来",
+    "pinyin": "lái",
+    "english_gloss": "to come",
+    "hsk_level": 1
+  },
+  {
+    "id": "w20",
+    "simplified": "看",
+    "pinyin": "kàn",
+    "english_gloss": "to look; to watch",
+    "hsk_level": 1
+  },
+  {
+    "id": "w21",
+    "simplified": "听",
+    "pinyin": "tīng",
+    "english_gloss": "to listen",
+    "hsk_level": 1
+  },
+  {
+    "id": "w22",
+    "simplified": "说",
+    "pinyin": "shuō",
+    "english_gloss": "to speak; to say",
+    "hsk_level": 1
+  },
+  {
+    "id": "w23",
+    "simplified": "读",
+    "pinyin": "dú",
+    "english_gloss": "to read",
+    "hsk_level": 1
+  },
+  {
+    "id": "w24",
+    "simplified": "写",
+    "pinyin": "xiě",
+    "english_gloss": "to write",
+    "hsk_level": 1
+  },
+  {
+    "id": "w25",
+    "simplified": "吃",
+    "pinyin": "chī",
+    "english_gloss": "to eat",
+    "hsk_level": 1
+  },
+  {
+    "id": "w26",
+    "simplified": "喝",
+    "pinyin": "hē",
+    "english_gloss": "to drink",
+    "hsk_level": 1
+  },
+  {
+    "id": "w27",
+    "simplified": "喜欢",
+    "pinyin": "xǐhuan",
+    "english_gloss": "to like",
+    "hsk_level": 1
+  },
+  {
+    "id": "w28",
+    "simplified": "想",
+    "pinyin": "xiǎng",
+    "english_gloss": "to want; to think",
+    "hsk_level": 1
+  },
+  {
+    "id": "w29",
+    "simplified": "知道",
+    "pinyin": "zhīdào",
+    "english_gloss": "to know",
+    "hsk_level": 2
+  },
+  {
+    "id": "w30",
+    "simplified": "学习",
+    "pinyin": "xuéxí",
+    "english_gloss": "to study; to learn",
+    "hsk_level": 1
+  },
+  {
+    "id": "w31",
+    "simplified": "学生",
+    "pinyin": "xuéshēng",
+    "english_gloss": "student",
+    "hsk_level": 1
+  },
+  {
+    "id": "w32",
+    "simplified": "老师",
+    "pinyin": "lǎoshī",
+    "english_gloss": "teacher",
+    "hsk_level": 1
+  },
+  {
+    "id": "w33",
+    "simplified": "中国",
+    "pinyin": "Zhōngguó",
+    "english_gloss": "China",
+    "hsk_level": 1
+  },
+  {
+    "id": "w34",
+    "simplified": "北京",
+    "pinyin": "Běijīng",
+    "english_gloss": "Beijing",
+    "hsk_level": 1
+  },
+  {
+    "id": "w35",
+    "simplified": "名字",
+    "pinyin": "míngzi",
+    "english_gloss": "name",
+    "hsk_level": 1
+  },
+  {
+    "id": "w36",
+    "simplified": "多少钱",
+    "pinyin": "duōshǎo qián",
+    "english_gloss": "how much (money)",
+    "hsk_level": 1
+  },
+  {
+    "id": "w37",
+    "simplified": "几",
+    "pinyin": "jǐ",
+    "english_gloss": "how many (few)",
+    "hsk_level": 1
+  },
+  {
+    "id": "w38",
+    "simplified": "天气",
+    "pinyin": "tiānqì",
+    "english_gloss": "weather",
+    "hsk_level": 1
+  },
+  {
+    "id": "w39",
+    "simplified": "今天",
+    "pinyin": "jīntiān",
+    "english_gloss": "today",
+    "hsk_level": 1
+  },
+  {
+    "id": "w40",
+    "simplified": "明天",
+    "pinyin": "míngtiān",
+    "english_gloss": "tomorrow",
+    "hsk_level": 1
+  },
+  {
+    "id": "w41",
+    "simplified": "现在",
+    "pinyin": "xiànzài",
+    "english_gloss": "now",
+    "hsk_level": 1
+  },
+  {
+    "id": "w42",
+    "simplified": "点",
+    "pinyin": "diǎn",
+    "english_gloss": "o'clock; dot",
+    "hsk_level": 1
+  },
+  {
+    "id": "w43",
+    "simplified": "年",
+    "pinyin": "nián",
+    "english_gloss": "year",
+    "hsk_level": 1
+  },
+  {
+    "id": "w44",
+    "simplified": "月",
+    "pinyin": "yuè",
+    "english_gloss": "month; moon",
+    "hsk_level": 1
+  },
+  {
+    "id": "w45",
+    "simplified": "日",
+    "pinyin": "rì",
+    "english_gloss": "day (of month); sun",
+    "hsk_level": 2
+  },
+  {
+    "id": "w46",
+    "simplified": "星期",
+    "pinyin": "xīngqī",
+    "english_gloss": "week",
+    "hsk_level": 1
+  },
+  {
+    "id": "w47",
+    "simplified": "书",
+    "pinyin": "shū",
+    "english_gloss": "book",
+    "hsk_level": 1
+  },
+  {
+    "id": "w48",
+    "simplified": "水",
+    "pinyin": "shuǐ",
+    "english_gloss": "water",
+    "hsk_level": 1
+  },
+  {
+    "id": "w49",
+    "simplified": "热",
+    "pinyin": "rè",
+    "english_gloss": "hot",
+    "hsk_level": 1
+  },
+  {
+    "id": "w50",
+    "simplified": "冷",
+    "pinyin": "lěng",
+    "english_gloss": "cold",
+    "hsk_level": 1
+  }
+]

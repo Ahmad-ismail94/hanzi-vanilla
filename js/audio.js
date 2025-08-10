@@ -1,0 +1,4 @@
+let lastUtterance=null,lastAudio=null;function pickZhVoice(){const v=speechSynthesis.getVoices();return v.find(x=>x.lang.toLowerCase().startsWith('zh'))||v[0]}
+function speak(text,rate=1){if(!('speechSynthesis'in window))throw new Error('TTS not supported');speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=pickZhVoice();if(v)u.voice=v;u.lang=v?.lang||'zh-CN';u.rate=rate;lastUtterance=u;speechSynthesis.speak(u)}
+export async function playWord(text,audioRef,slow=false){if(audioRef?.src){try{if(lastAudio){lastAudio.pause();lastAudio.currentTime=0}lastAudio=new Audio(audioRef.src);if(slow)lastAudio.playbackRate=0.85;await lastAudio.play();return}catch(e){console.warn('Human audio failed, fallback to TTS',e)}}speak((audioRef?.tts)||text,slow?0.85:1)}
+export function replay(){if(lastAudio){lastAudio.currentTime=0;lastAudio.play()}else if(lastUtterance){const txt=lastUtterance.text;const rate=lastUtterance.rate;speak(txt,rate)}}

@@ -1,0 +1,1 @@
+import{rdp,normalize,resample}from'./draw-rdp.js';export function processStroke(raw,{simplifyEpsilon=0.005,resamplePoints=64}={}){const simp=rdp(raw,simplifyEpsilon);const norm=normalize(simp);return resample(norm,resamplePoints)}
