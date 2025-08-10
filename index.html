@@ -20,6 +20,7 @@
     .board{height:46vh; border:1px dashed #cbd5e1; border-radius:12px; background:#f8fafc}
     .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
     .footer{margin-top:16px; font-size:12px; color:#64748b}
+    /* قائمة الكلمات + تأثير الضغط/التحديد */
     ul.words{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px}
     ul.words li{
       background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:10px;
@@ -72,9 +73,9 @@
     </section>
   </main>
 
-  <!-- كل الجافاسكربت مدمج هنا: -->
+  <!-- كل الجافاسكربت مدمج هنا -->
   <script>
-    // ====== أدوات مسار الضربة (تبسيط/تطبيع/إعادة أخذ عينات) ======
+    /* ---------- أدوات تبسيط/تطبيع/إعادة أخذ عينات ---------- */
     const perpendicularDistance=(p,a,b)=>{
       const num=Math.abs((b[0]-a[0])*(a[1]-p[1])-(a[0]-p[0])*(b[1]-a[1]));
       const den=Math.hypot(b[0]-a[0],b[1]-a[1])||1e-9; return num/den;
@@ -109,7 +110,7 @@
       return resample(normalize(rdp(raw,simplifyEpsilon)),resamplePoints);
     };
 
-    // ====== Frechet + التحقق ======
+    /* ---------- Frechet + التحقق ---------- */
     const discreteFrechet=(A,B)=>{
       const m=A.length, n=B.length; const ca=Array.from({length:m},()=>Array(n).fill(-1));
       const dist=(i,j)=>Math.hypot(A[i][0]-B[j][0],A[i][1]-B[j][1]);
@@ -138,8 +139,14 @@
       let verdict='wrong'; if(df<=tol.frechet && cos>=tol.angleCosMin) verdict='ok'; else if(df<=tol.frechet*1.35) verdict='close';
       return {verdict,score};
     };
+    // قبول الضربة حتى لو كانت معكوسة الاتجاه
+    const bestCompare=(user,ref,tol)=>{
+      const a=compareStroke(user,ref,tol);
+      const b=compareStroke(user,[...ref].reverse(),tol);
+      return (a.score>=b.score)?a:b;
+    };
 
-    // ====== SRS بسيط ======
+    /* ---------- SRS بسيط ---------- */
     const initState=(card_id,now=Date.now())=>({card_id,interval:1,ease:2.3,due_ts:now,error_weight:0});
     const updateState=(s,result,errors=0,now=Date.now())=>{
       let {interval,ease,error_weight}=s;
@@ -150,7 +157,7 @@
       const due_ts=now+interval*86400000; return {...s,interval,ease,error_weight,due_ts};
     };
 
-    // ====== صوت (TTS) مع معالجة voiceschanged ======
+    /* ---------- صوت (TTS) مع voiceschanged ---------- */
     let lastUtterance=null,lastAudio=null,zhVoice=null;
     function ensureVoicesReady(){
       const v=speechSynthesis.getVoices();
@@ -178,7 +185,7 @@
     }
     function replay(){ if(lastAudio){lastAudio.currentTime=0;lastAudio.play();} else if(lastUtterance){ speak(lastUtterance.text,lastUtterance.rate); } }
 
-    // ====== تخزين بسيط ======
+    /* ---------- تخزين بسيط + تقدّم الإكمال ---------- */
     const Store=(()=>{
       const key='hanzi-vanilla';
       const load=()=>{ try{return JSON.parse(localStorage.getItem(key)||'{}')}catch(e){return{}} };
@@ -188,11 +195,17 @@
         export(){return new Blob([JSON.stringify(data)],{type:'application/json'})},
         async import(file){const txt=await file.text(); data=JSON.parse(txt||'{}'); save(data);} };
     })();
+    const Progress=(()=>{
+      let data={}; try{data=JSON.parse(localStorage.getItem('hanzi-progress')||'{}')}catch(e){}
+      const save=()=>localStorage.setItem('hanzi-progress',JSON.stringify(data));
+      return { get(id){return data[id]||{completions:0,ts:0}}, inc(id){const p=this.get(id); p.completions++; p.ts=Date.now(); data[id]=p; save();} };
+    })();
 
-    // ====== حالة التطبيق ======
+    /* ---------- حالة التطبيق ---------- */
     const $ = s => document.querySelector(s);
     let words=[], chars={}, current=null, mode='guided', strictness='flex';
     let verdictSpan, canvas, ctx, drawing=false, rawPoints=[];
+    // مصفوفة كل ضربات الكلمة (كل أحرفها) بترتيب صحيح
     let refStrokes=[], strokeIdx=0, accepted=[];
 
     function getTol(){ return strictness==='strict'?STRICT:FLEX; }
@@ -202,16 +215,26 @@
       chars  = await (await fetch('data/strokes/characters.json')).json();
       renderWordList(); setCurrent(words[0].id);
     }
+
     function setCurrent(id){
       current = words.find(w=>w.id===id) || words[0];
-      $('#hanzi').textContent=current.simplified; $('#pinyin').textContent=current.pinyin; $('#gloss').textContent=current.english_gloss; verdictSpan.textContent='';
-      const ch=current.simplified[0]; refStrokes=(chars[ch]||[]).map(s=>s); strokeIdx=0; accepted=[]; clearCanvas(); render(); highlightSelection();
+      $('#hanzi').textContent=current.simplified; $('#pinyin').textContent=current.pinyin; $('#gloss').textContent=current.english_gloss;
+      verdictSpan.textContent='';
+      // استخدم ضربات كل أحرف الكلمة (وليس أول حرف فقط)
+      refStrokes = [];
+      for (const ch of current.simplified) {
+        const parts = chars[ch];
+        if (Array.isArray(parts)) refStrokes.push(...parts);
+      }
+      strokeIdx=0; accepted=[]; clearCanvas(); render(); highlightSelection();
     }
 
     function renderWordList(){
       const ul=$('#word-list'); ul.innerHTML='';
       for(const w of words){
         const li=document.createElement('li'); li.textContent=`${w.simplified} (${w.pinyin})`;
+        const done=Progress.get(w.id).completions;
+        if(done>0){ const badge=document.createElement('small'); badge.textContent=` ✓${done}`; badge.style.marginLeft='6px'; badge.style.color='#16a34a'; li.appendChild(badge); }
         li.setAttribute('role','button');
         li.addEventListener('pointerdown',()=>li.classList.add('pressed'));
         li.addEventListener('pointerup',()=>li.classList.remove('pressed'));
@@ -245,9 +268,9 @@
       const sx=p=>scale? p[0]*canvas.clientWidth : p[0], sy=p=>scale? p[1]*canvas.clientHeight : p[1];
       ctx.moveTo(sx(norm[0]),sy(norm[0])); for(let i=1;i<norm.length;i++) ctx.lineTo(sx(norm[i]),sy(norm[i])); ctx.stroke();
     }
-    function drawEndpoints(stroke,color){ const r=6; ctx.fillStyle=color;
-      ctx.beginPath(); ctx.arc(stroke[0][0]*canvas.clientWidth, stroke[0][1]*canvas.clientHeight, r, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(stroke.at(-1)[0]*canvas.clientWidth, stroke.at(-1)[1]*canvas.clientHeight, r, 0, Math.PI*2); ctx.fill();
+    function drawEndpoints(stroke,color){ const rr=6; ctx.fillStyle=color;
+      ctx.beginPath(); ctx.arc(stroke[0][0]*canvas.clientWidth, stroke[0][1]*canvas.clientHeight, rr, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(stroke.at(-1)[0]*canvas.clientWidth, stroke.at(-1)[1]*canvas.clientHeight, rr, 0, Math.PI*2); ctx.fill();
     }
     function render(){
       if(!ctx) return; ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -267,12 +290,28 @@
       const user = rawPoints.map(p=>[p[0]/canvas.clientWidth, p[1]/canvas.clientHeight]);
       const normalized = processStroke(user);
       const guide=refStrokes[strokeIdx];
-      let cmp={verdict:'ok',score:1}; if(guide&&guide.length) cmp=compareStroke(normalized,guide, getTol());
+      let cmp={verdict:'ok',score:1};
+      if(guide&&guide.length){ cmp=bestCompare(normalized,guide,getTol()); }
+      // تساهل إضافي في Guided إن كان قريبًا من العتبة
+      if(mode==='guided' && guide && cmp.verdict==='wrong'){
+        const dfOnly=discreteFrechet(normalized,guide);
+        if(dfOnly<=getTol().frechet*1.5) cmp={verdict:'close',score:0.6};
+      }
+      // لون المسار المرسوم
       const color=cmp.verdict==='ok'?'#22c55e':(cmp.verdict==='close'?'#f59e0b':'#ef4444');
       ctx.lineWidth=8; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(rawPoints[0][0],rawPoints[0][1]); for(let i=1;i<rawPoints.length;i++) ctx.lineTo(rawPoints[i][0],rawPoints[i][1]); ctx.stroke();
       verdictSpan.textContent=`${cmp.verdict} (${Math.round(cmp.score*100)}%)`;
       if(navigator.vibrate) navigator.vibrate(cmp.verdict==='ok'?10:cmp.verdict==='close'?20:40);
-      if(guide && (cmp.verdict==='ok' || cmp.verdict==='close')){ accepted.push(guide); strokeIdx=Math.min(strokeIdx+1, refStrokes.length); if(strokeIdx===refStrokes.length){ setTimeout(()=>{verdictSpan.textContent='✓ character complete';},80);} }
+
+      // قبول الضربة والانتقال للتي بعدها + تخزين إن اكتمل الحرف/الكلمة
+      if(guide && (cmp.verdict==='ok' || cmp.verdict==='close')){
+        accepted.push(guide);
+        strokeIdx=Math.min(strokeIdx+1, refStrokes.length);
+        if(strokeIdx===refStrokes.length){
+          Progress.inc(current.id);
+          setTimeout(()=>{ verdictSpan.textContent='✓ character complete'; },80);
+        }
+      }
       rawPoints=[]; render();
     }
 
@@ -296,9 +335,7 @@
     function registerSW(){ if('serviceWorker'in navigator) navigator.serviceWorker.register('./sw.js').catch(console.error); }
 
     window.addEventListener('DOMContentLoaded', async ()=>{
-      bindUI(); initCanvas(); registerSW();
-      verdictSpan=document.getElementById('verdict');
-      await loadData();
+      bindUI(); initCanvas(); registerSW(); await loadData();
     });
   </script>
 </body>
