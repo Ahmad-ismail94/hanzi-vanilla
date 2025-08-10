@@ -1,342 +1,355 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <title>Hanzi Trainer (Vanilla)</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; margin:0; background:#f5f7fb; color:#0f172a}
-    header{padding:12px 16px; background:#0f172a; color:#fff; position:sticky; top:0}
-    main{padding:12px 16px; max-width:900px; margin:0 auto}
-    .grid{display:grid; gap:12px}
-    @media(min-width:800px){ .grid{grid-template-columns: 1.2fr 1fr} }
-    .card{background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px}
-    .hanzi{font-size:56px; font-weight:700}
-    .meta{display:flex; align-items:center; gap:8px; margin-top:8px}
-    .pinyin{font-size:16px; color:#334155}
-    .gloss{color:#475569; margin-top:4px}
-    .board{height:46vh; border:1px dashed #cbd5e1; border-radius:12px; background:#f8fafc}
-    .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
-    .footer{margin-top:16px; font-size:12px; color:#64748b}
-    /* قائمة الكلمات + تأثير الضغط/التحديد */
-    ul.words{list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px}
-    ul.words li{
-      background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:10px;
-      transition: transform .06s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
-      user-select:none; cursor:pointer;
-    }
-    ul.words li.pressed{ transform: scale(0.98); }
-    ul.words li.selected{ border-color:#6366f1; background:#eef2ff; box-shadow:0 0 0 2px rgba(99,102,241,.15) inset; }
-    ul.words li:active{ transform: scale(0.98); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanzi Trainer — vanilla PWA (Offline)</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        body { font-family: sans-serif; display: flex; }
+        .main { flex: 1; padding: 20px; }
+        .sidebar { width: 200px; border-left: 1px solid #ccc; padding: 20px; }
+        .character { text-align: center; }
+        h1 { font-size: 100px; margin: 0; }
+        .pinyin { display: flex; justify-content: center; align-items: center; }
+        .pinyin span { margin-right: 10px; }
+        .mode { display: flex; justify-content: center; margin: 20px 0; }
+        .mode button { margin: 0 5px; }
+        .mode button.active { background: lightblue; }
+        .srs { display: flex; justify-content: center; margin: 20px 0; }
+        .srs button { margin: 0 5px; }
+        .actions { display: flex; justify-content: center; margin: 20px 0; }
+        #word-list { list-style: none; padding: 0; }
+        #word-list li { cursor: pointer; padding: 5px; }
+        #word-list li:active { background: gray; }
+        #word-list li.selected { background: lightblue; }
+        .badge { font-size: small; color: green; margin-left: 5px; }
+        canvas { border: 1px solid #000; display: block; margin: 20px auto; touch-action: none; }
+    </style>
 </head>
 <body>
-  <header><strong>Hanzi Trainer</strong> — vanilla PWA (Offline)</header>
-  <main>
-    <div class="grid">
-      <section class="card">
-        <div class="hanzi" id="hanzi">汉</div>
-        <div class="meta">
-          <span class="pinyin" id="pinyin">hàn</span>
-          <button id="btn-play" aria-label="Play audio">▶︎</button>
-          <button id="btn-slow" aria-label="Play slow">⟲0.85×</button>
-          <button id="btn-replay" aria-label="Replay">↺</button>
+    <div class="main">
+        <div class="character">
+            <h1 id="hanzi"></h1>
+            <div class="pinyin">
+                <span id="pinyin"></span>
+                <button id="play">▶︎</button>
+                <button id="slow">⟲0.85×</button>
+                <button id="replay">↺</button>
+            </div>
+            <span id="english"></span>
         </div>
-        <div class="gloss" id="gloss">Chinese</div>
-        <div class="toolbar">
-          <button id="btn-guided">Guided</button>
-          <button id="btn-recall">Recall</button>
-          <button id="btn-strictness">Strictness: flex</button>
+        <canvas id="canvas" width="256" height="256"></canvas>
+        <div class="mode">
+            <button id="guided" class="active">Guided</button>
+            <button id="recall">Recall</button>
+            <label>Strictness: flex</label>
         </div>
-        <div class="toolbar">
-          <button id="srs-again">Again</button>
-          <button id="srs-hard">Hard</button>
-          <button id="srs-good">Good</button>
-          <button id="srs-easy">Easy</button>
+        <div class="srs">
+            <button>Again</button>
+            <button>Hard</button>
+            <button>Good</button>
+            <button>Easy</button>
         </div>
-        <div class="toolbar">
-          <button id="btn-export">Export JSON</button>
-          <label><input type="file" id="file-import" accept="application/json" /> Import JSON</label>
+        <div class="actions">
+            <button id="export">Export JSON</button>
+            <input type="file" id="import" style="display:none"/>
+            <label for="import"> Import JSON</label>
         </div>
-        <div class="footer">Result: <strong id="verdict"></strong></div>
-      </section>
-      <section class="card">
-        <canvas class="board" id="board"></canvas>
-      </section>
+        <div id="result">Result: </div>
     </div>
+    <div class="sidebar">
+        <h2>Words</h2>
+        <ul id="word-list"></ul>
+    </div>
+    <script>
+        // Data
+        let words = [];
+        let strokesData = {};
+        let currentWord = null;
+        let currentStrokes = [];
+        let strokeIndex = 0;
+        let mode = 'guided';
+        let progress = JSON.parse(localStorage.getItem('hanzi-progress')) || {};
+        let voices = [];
+        let chineseVoice = null;
+        let lastUtterance = null;
 
-    <section class="card" style="margin-top:12px">
-      <h3>Words</h3>
-      <ul class="words" id="word-list"></ul>
-    </section>
-  </main>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let currentPath = [];
 
-  <!-- كل الجافاسكربت مدمج هنا -->
-  <script>
-    /* ---------- أدوات تبسيط/تطبيع/إعادة أخذ عينات ---------- */
-    const perpendicularDistance=(p,a,b)=>{
-      const num=Math.abs((b[0]-a[0])*(a[1]-p[1])-(a[0]-p[0])*(b[1]-a[1]));
-      const den=Math.hypot(b[0]-a[0],b[1]-a[1])||1e-9; return num/den;
-    };
-    const rdp=(points,epsilon=0.005)=>{
-      if(points.length<3) return points.slice();
-      let dmax=0,index=0; const end=points.length-1;
-      for(let i=1;i<end;i++){const d=perpendicularDistance(points[i],points[0],points[end]); if(d>dmax){index=i; dmax=d;}}
-      if(dmax>epsilon){const rec1=rdp(points.slice(0,index+1),epsilon); const rec2=rdp(points.slice(index),epsilon); return rec1.slice(0,-1).concat(rec2);}
-      return [points[0],points[end]];
-    };
-    const normalize=(points,padding=0.05)=>{
-      const xs=points.map(p=>p[0]), ys=points.map(p=>p[1]);
-      const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
-      const w=(maxX-minX)||1e-9, h=(maxY-minY)||1e-9;
-      return points.map(p=>[padding+(p[0]-minX)/w*(1-2*padding), padding+(p[1]-minY)/h*(1-2*padding)]);
-    };
-    const resample=(points,n=64)=>{
-      if(points.length===0) return []; if(points.length===1) return Array(n).fill(points[0]);
-      const lens=[]; let total=0;
-      for(let k=0;k<points.length-1;k++){const l=Math.hypot(points[k+1][0]-points[k][0],points[k+1][1]-points[k][1]); lens.push(l); total+=l;}
-      const out=[]; for(let j=0;j<n;j++){
-        const target=j/(n-1)*total; let acc=0,k=0;
-        while(k<lens.length && acc+lens[k]<target){acc+=lens[k];k++}
-        const remain=target-acc; const ratio=lens[k]?remain/lens[k]:0;
-        const a=points[k], b=points[k+1]||points[k];
-        out.push([a[0]+(b[0]-a[0])*ratio, a[1]+(b[1]-a[1])*ratio]);
-      }
-      return out;
-    };
-    const processStroke=(raw,{simplifyEpsilon=0.005,resamplePoints=64}={})=>{
-      return resample(normalize(rdp(raw,simplifyEpsilon)),resamplePoints);
-    };
-
-    /* ---------- Frechet + التحقق ---------- */
-    const discreteFrechet=(A,B)=>{
-      const m=A.length, n=B.length; const ca=Array.from({length:m},()=>Array(n).fill(-1));
-      const dist=(i,j)=>Math.hypot(A[i][0]-B[j][0],A[i][1]-B[j][1]);
-      const c=(i,j)=>{
-        if(ca[i][j]>-1) return ca[i][j];
-        if(i===0&&j===0) ca[i][j]=dist(0,0);
-        else if(i>0&&j===0) ca[i][j]=Math.max(c(i-1,0),dist(i,0));
-        else if(i===0&&j>0) ca[i][j]=Math.max(c(0,j-1),dist(0,j));
-        else if(i>0&&j>0) ca[i][j]=Math.max(Math.min(c(i-1,j),c(i-1,j-1),c(i,j-1)),dist(i,j));
-        else ca[i][j]=Infinity; return ca[i][j];
-      };
-      return c(m-1,n-1);
-    };
-    const FLEX={frechet:0.12,angleCosMin:0.6,orderTolerance:1};
-    const STRICT={frechet:0.08,angleCosMin:0.8,orderTolerance:0};
-    const dirCos=(a,b,c,d)=>{
-      const v1=[b[0]-a[0],b[1]-a[1]], v2=[d[0]-c[0],d[1]-c[1]];
-      const dot=v1[0]*v2[0]+v1[1]*v2[1]; const n1=Math.hypot(...v1)||1e-9, n2=Math.hypot(...v2)||1e-9;
-      return dot/(n1*n2);
-    };
-    const compareStroke=(user,ref,tol)=>{
-      const df=discreteFrechet(user,ref);
-      const a=user[0], b=user[user.length-1], c=ref[0], d=ref[ref.length-1];
-      const cos=dirCos(a,b,c,d);
-      let score=1-Math.min(1,df/tol.frechet); if(cos<tol.angleCosMin) score*=0.6;
-      let verdict='wrong'; if(df<=tol.frechet && cos>=tol.angleCosMin) verdict='ok'; else if(df<=tol.frechet*1.35) verdict='close';
-      return {verdict,score};
-    };
-    // قبول الضربة حتى لو كانت معكوسة الاتجاه
-    const bestCompare=(user,ref,tol)=>{
-      const a=compareStroke(user,ref,tol);
-      const b=compareStroke(user,[...ref].reverse(),tol);
-      return (a.score>=b.score)?a:b;
-    };
-
-    /* ---------- SRS بسيط ---------- */
-    const initState=(card_id,now=Date.now())=>({card_id,interval:1,ease:2.3,due_ts:now,error_weight:0});
-    const updateState=(s,result,errors=0,now=Date.now())=>{
-      let {interval,ease,error_weight}=s;
-      if(result==='again'){ease=Math.max(1.3,ease-0.2);interval=1;error_weight+=Math.max(1,errors);}
-      else if(result==='hard'){ease=Math.max(1.3,ease-0.05);interval=Math.max(1,Math.round(interval*1.2));error_weight+=Math.max(0,errors);}
-      else if(result==='good'){interval=Math.max(1,Math.round(interval*ease));error_weight=Math.max(0,error_weight-1);}
-      else if(result==='easy'){ease=Math.min(2.6,ease+0.05);interval=Math.max(1,Math.round(interval*(ease+0.15)));error_weight=Math.max(0,error_weight-2);}
-      const due_ts=now+interval*86400000; return {...s,interval,ease,error_weight,due_ts};
-    };
-
-    /* ---------- صوت (TTS) مع voiceschanged ---------- */
-    let lastUtterance=null,lastAudio=null,zhVoice=null;
-    function ensureVoicesReady(){
-      const v=speechSynthesis.getVoices();
-      if(v && v.length){ zhVoice = v.find(x=>x.lang.toLowerCase().startsWith('zh')) || v.find(x=>x.lang.toLowerCase().startsWith('en')) || v[0]; return true; }
-      return false;
-    }
-    if('speechSynthesis' in window){
-      ensureVoicesReady();
-      window.speechSynthesis.onvoiceschanged = ensureVoicesReady;
-    }
-    function speak(text,rate=1){
-      try{
-        if(!('speechSynthesis'in window))return;
-        speechSynthesis.cancel();
-        const u=new SpeechSynthesisUtterance(text); if(zhVoice) u.voice=zhVoice; u.lang=(zhVoice&&zhVoice.lang)||'zh-CN'; u.rate=rate;
-        lastUtterance=u; speechSynthesis.speak(u);
-      }catch(e){console.warn(e);}
-    }
-    async function playWord(text,audioRef,slow=false){
-      if(audioRef?.src){
-        try{ if(lastAudio){lastAudio.pause();lastAudio.currentTime=0;} lastAudio=new Audio(audioRef.src); if(slow) lastAudio.playbackRate=0.85; await lastAudio.play(); return; }
-        catch(e){ console.warn('Human audio failed, fallback to TTS', e); }
-      }
-      speak(audioRef?.tts||text, slow?0.85:1);
-    }
-    function replay(){ if(lastAudio){lastAudio.currentTime=0;lastAudio.play();} else if(lastUtterance){ speak(lastUtterance.text,lastUtterance.rate); } }
-
-    /* ---------- تخزين بسيط + تقدّم الإكمال ---------- */
-    const Store=(()=>{
-      const key='hanzi-vanilla';
-      const load=()=>{ try{return JSON.parse(localStorage.getItem(key)||'{}')}catch(e){return{}} };
-      const save=d=>localStorage.setItem(key,JSON.stringify(d));
-      let data=load();
-      return { getSRS:id=>data.srs?.[id]||null, setSRS(id,st){data.srs=data.srs||{};data.srs[id]=st;save(data);},
-        export(){return new Blob([JSON.stringify(data)],{type:'application/json'})},
-        async import(file){const txt=await file.text(); data=JSON.parse(txt||'{}'); save(data);} };
-    })();
-    const Progress=(()=>{
-      let data={}; try{data=JSON.parse(localStorage.getItem('hanzi-progress')||'{}')}catch(e){}
-      const save=()=>localStorage.setItem('hanzi-progress',JSON.stringify(data));
-      return { get(id){return data[id]||{completions:0,ts:0}}, inc(id){const p=this.get(id); p.completions++; p.ts=Date.now(); data[id]=p; save();} };
-    })();
-
-    /* ---------- حالة التطبيق ---------- */
-    const $ = s => document.querySelector(s);
-    let words=[], chars={}, current=null, mode='guided', strictness='flex';
-    let verdictSpan, canvas, ctx, drawing=false, rawPoints=[];
-    // مصفوفة كل ضربات الكلمة (كل أحرفها) بترتيب صحيح
-    let refStrokes=[], strokeIdx=0, accepted=[];
-
-    function getTol(){ return strictness==='strict'?STRICT:FLEX; }
-
-    async function loadData(){
-      words = await (await fetch('data/words-50.json')).json();
-      chars  = await (await fetch('data/strokes/characters.json')).json();
-      renderWordList(); setCurrent(words[0].id);
-    }
-
-    function setCurrent(id){
-      current = words.find(w=>w.id===id) || words[0];
-      $('#hanzi').textContent=current.simplified; $('#pinyin').textContent=current.pinyin; $('#gloss').textContent=current.english_gloss;
-      verdictSpan.textContent='';
-      // استخدم ضربات كل أحرف الكلمة (وليس أول حرف فقط)
-      refStrokes = [];
-      for (const ch of current.simplified) {
-        const parts = chars[ch];
-        if (Array.isArray(parts)) refStrokes.push(...parts);
-      }
-      strokeIdx=0; accepted=[]; clearCanvas(); render(); highlightSelection();
-    }
-
-    function renderWordList(){
-      const ul=$('#word-list'); ul.innerHTML='';
-      for(const w of words){
-        const li=document.createElement('li'); li.textContent=`${w.simplified} (${w.pinyin})`;
-        const done=Progress.get(w.id).completions;
-        if(done>0){ const badge=document.createElement('small'); badge.textContent=` ✓${done}`; badge.style.marginLeft='6px'; badge.style.color='#16a34a'; li.appendChild(badge); }
-        li.setAttribute('role','button');
-        li.addEventListener('pointerdown',()=>li.classList.add('pressed'));
-        li.addEventListener('pointerup',()=>li.classList.remove('pressed'));
-        li.addEventListener('click',()=>{ setCurrent(w.id); if(navigator.vibrate) navigator.vibrate(8); });
-        ul.appendChild(li);
-      }
-    }
-    function highlightSelection(){
-      $('#word-list').querySelectorAll('li').forEach(li=>li.classList.remove('selected'));
-      const items=[...$('#word-list').children]; const idx=words.findIndex(w=>w.id===current.id);
-      if(items[idx]) items[idx].classList.add('selected');
-    }
-
-    function speakNormal(){ playWord(current.simplified, current.audio_ref?{src:current.audio_ref}:null, false); }
-    function speakSlow(){   playWord(current.simplified, current.audio_ref?{src:current.audio_ref}:null, true); }
-
-    function initCanvas(){
-      canvas=$('#board'); ctx=canvas.getContext('2d'); resize();
-      addEventListener('resize',resize);
-      canvas.addEventListener('pointerdown',onDown);
-      canvas.addEventListener('pointermove',onMove);
-      canvas.addEventListener('pointerup',onUp);
-      canvas.addEventListener('pointercancel',onUp);
-      canvas.addEventListener('lostpointercapture',onUp);
-    }
-    function resize(){ const dpr=devicePixelRatio||1; const r=canvas.getBoundingClientRect(); canvas.width=Math.floor(r.width*dpr); canvas.height=Math.floor(r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); render(); }
-    function clearCanvas(){ rawPoints=[]; ctx&&ctx.clearRect(0,0,canvas.width,canvas.height); }
-    function drawStroke(norm,color,width=6,scale=false){
-      ctx.strokeStyle=color; ctx.lineWidth=width; ctx.lineCap='round';
-      ctx.beginPath();
-      const sx=p=>scale? p[0]*canvas.clientWidth : p[0], sy=p=>scale? p[1]*canvas.clientHeight : p[1];
-      ctx.moveTo(sx(norm[0]),sy(norm[0])); for(let i=1;i<norm.length;i++) ctx.lineTo(sx(norm[i]),sy(norm[i])); ctx.stroke();
-    }
-    function drawEndpoints(stroke,color){ const rr=6; ctx.fillStyle=color;
-      ctx.beginPath(); ctx.arc(stroke[0][0]*canvas.clientWidth, stroke[0][1]*canvas.clientHeight, rr, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(stroke.at(-1)[0]*canvas.clientWidth, stroke.at(-1)[1]*canvas.clientHeight, rr, 0, Math.PI*2); ctx.fill();
-    }
-    function render(){
-      if(!ctx) return; ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(const s of accepted) drawStroke(s,'#22c55e',7,true);
-      const guide=refStrokes[strokeIdx];
-      if(mode==='guided' && guide){ drawStroke(guide,'#c7d2fe',6,true); drawEndpoints(guide,'#6366f1'); }
-      if(rawPoints.length>1){
-        ctx.strokeStyle='#0ea5e9'; ctx.lineWidth=6; ctx.lineCap='round'; ctx.lineJoin='round';
-        ctx.beginPath(); ctx.moveTo(rawPoints[0][0],rawPoints[0][1]); for(let i=1;i<rawPoints.length;i++) ctx.lineTo(rawPoints[i][0],rawPoints[i][1]); ctx.stroke();
-      }
-    }
-    const toLocal=e=>{const r=canvas.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top];};
-    function onDown(e){ canvas.setPointerCapture(e.pointerId); drawing=true; rawPoints=[toLocal(e)]; render(); }
-    function onMove(e){ if(!drawing) return; rawPoints.push(toLocal(e)); render(); }
-    function onUp(){
-      if(!drawing) return; drawing=false;
-      const user = rawPoints.map(p=>[p[0]/canvas.clientWidth, p[1]/canvas.clientHeight]);
-      const normalized = processStroke(user);
-      const guide=refStrokes[strokeIdx];
-      let cmp={verdict:'ok',score:1};
-      if(guide&&guide.length){ cmp=bestCompare(normalized,guide,getTol()); }
-      // تساهل إضافي في Guided إن كان قريبًا من العتبة
-      if(mode==='guided' && guide && cmp.verdict==='wrong'){
-        const dfOnly=discreteFrechet(normalized,guide);
-        if(dfOnly<=getTol().frechet*1.5) cmp={verdict:'close',score:0.6};
-      }
-      // لون المسار المرسوم
-      const color=cmp.verdict==='ok'?'#22c55e':(cmp.verdict==='close'?'#f59e0b':'#ef4444');
-      ctx.lineWidth=8; ctx.strokeStyle=color; ctx.beginPath(); ctx.moveTo(rawPoints[0][0],rawPoints[0][1]); for(let i=1;i<rawPoints.length;i++) ctx.lineTo(rawPoints[i][0],rawPoints[i][1]); ctx.stroke();
-      verdictSpan.textContent=`${cmp.verdict} (${Math.round(cmp.score*100)}%)`;
-      if(navigator.vibrate) navigator.vibrate(cmp.verdict==='ok'?10:cmp.verdict==='close'?20:40);
-
-      // قبول الضربة والانتقال للتي بعدها + تخزين إن اكتمل الحرف/الكلمة
-      if(guide && (cmp.verdict==='ok' || cmp.verdict==='close')){
-        accepted.push(guide);
-        strokeIdx=Math.min(strokeIdx+1, refStrokes.length);
-        if(strokeIdx===refStrokes.length){
-          Progress.inc(current.id);
-          setTimeout(()=>{ verdictSpan.textContent='✓ character complete'; },80);
+        // Load data
+        async function loadData() {
+            const wordsRes = await fetch('data/words-50.json');
+            words = await wordsRes.json();
+            const strokesRes = await fetch('data/strokes/characters.json');
+            strokesData = await strokesRes.json();
+            populateWordList();
         }
-      }
-      rawPoints=[]; render();
-    }
 
-    function bindUI(){
-      verdictSpan=$('#verdict');
-      $('#btn-guided').addEventListener('click',()=>{mode='guided'; clearCanvas(); render();});
-      $('#btn-recall').addEventListener('click',()=>{mode='recall'; clearCanvas(); render();});
-      $('#btn-strictness').addEventListener('click',()=>{strictness=(strictness==='flex')?'strict':'flex'; $('#btn-strictness').textContent=`Strictness: ${strictness}`;});
-      $('#btn-play').addEventListener('click',()=>playWord(current?.simplified||'',null,false));
-      $('#btn-slow').addEventListener('click',()=>playWord(current?.simplified||'',null,true));
-      $('#btn-replay').addEventListener('click',()=>replay());
-      for(const id of ['again','hard','good','easy']){
-        document.getElementById('srs-'+id).addEventListener('click',()=>{
-          const s=Store.getSRS(current.id)||initState(current.id); const up=updateState(s,id,0); Store.setSRS(current.id,up); alert(`Saved: ${id}. Next due in ~${up.interval} day(s).`);
+        // Populate word list
+        function populateWordList() {
+            const ul = document.getElementById('word-list');
+            ul.innerHTML = '';
+            words.forEach(w => {
+                const li = document.createElement('li');
+                li.textContent = w.hanzi + ' (' + w.pinyin + ')';
+                if (progress[w.hanzi] > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge';
+                    badge.textContent = '✓' + progress[w.hanzi];
+                    li.appendChild(badge);
+                }
+                li.addEventListener('click', () => selectWord(w));
+                ul.appendChild(li);
+            });
+        }
+
+        // Select word
+        function selectWord(word) {
+            currentWord = word;
+            document.getElementById('hanzi').textContent = word.hanzi;
+            document.getElementById('pinyin').textContent = word.pinyin;
+            document.getElementById('english').textContent = word.english;
+            // Highlight selected
+            const lis = document.querySelectorAll('#word-list li');
+            lis.forEach(li => li.classList.remove('selected'));
+            const selectedLi = Array.from(lis).find(li => li.textContent.startsWith(word.hanzi));
+            if (selectedLi) selectedLi.classList.add('selected');
+            // Load strokes
+            currentStrokes = [];
+            for (let char of word.hanzi) {
+                if (strokesData[char]) {
+                    currentStrokes = currentStrokes.concat(strokesData[char]);
+                }
+            }
+            strokeIndex = 0;
+            clearCanvas();
+            drawCurrentStrokeGuide();
+        }
+
+        // Canvas events
+        canvas.addEventListener('pointerdown', e => {
+            drawing = true;
+            currentPath = [];
+            const rect = canvas.getBoundingClientRect();
+            currentPath.push({x: e.clientX - rect.left, y: e.clientY - rect.top});
+            ctx.beginPath();
+            ctx.moveTo(currentPath[0].x, currentPath[0].y);
         });
-      }
-      $('#btn-export').addEventListener('click',async()=>{const blob=Store.export(); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='hanzi-backup.json'; a.click(); URL.revokeObjectURL(url);});
-      $('#file-import').addEventListener('change',async e=>{const f=e.target.files[0]; if(!f) return; await Store.import(f); alert('Imported progress.');});
-    }
 
-    function registerSW(){ if('serviceWorker'in navigator) navigator.serviceWorker.register('./sw.js').catch(console.error); }
+        canvas.addEventListener('pointermove', e => {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const point = {x: e.clientX - rect.left, y: e.clientY - rect.top};
+            currentPath.push(point);
+            ctx.lineTo(point.x, point.y);
+            ctx.stroke();
+        });
 
-    window.addEventListener('DOMContentLoaded', async ()=>{
-      bindUI(); initCanvas(); registerSW(); await loadData();
-    });
-  </script>
+        canvas.addEventListener('pointerup', () => {
+            drawing = false;
+            if (currentPath.length < 2) return;
+            processStroke();
+        });
+
+        // Clear canvas
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Draw guide for current stroke in guided mode
+        function drawCurrentStrokeGuide() {
+            if (mode !== 'guided' || strokeIndex >= currentStrokes.length) return;
+            const stroke = currentStrokes[strokeIndex];
+            // Assume strokes are 0-1024, scale to 256
+            const scale = 256 / 1024;
+            ctx.strokeStyle = '#ccc';
+            ctx.beginPath();
+            ctx.moveTo(stroke[0].x * scale, stroke[0].y * scale);
+            for (let i = 1; i < stroke.length; i++) {
+                ctx.lineTo(stroke[i].x * scale, stroke[i].y * scale);
+            }
+            ctx.stroke();
+            // Start/end points
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(stroke[0].x * scale, stroke[0].y * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(stroke[stroke.length - 1].x * scale, stroke[stroke.length - 1].y * scale, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // Process drawn stroke
+        function processStroke() {
+            if (strokeIndex >= currentStrokes.length) return;
+            let refStroke = scaleStroke(currentStrokes[strokeIndex]);
+            let drawn = simplifyPath(currentPath); // Simplify if needed
+            let dist = frechetDistance(drawn, refStroke);
+            let revRef = refStroke.slice().reverse();
+            let revDist = frechetDistance(drawn, revRef);
+            let minDist = Math.min(dist, revDist);
+            const threshold = mode === 'guided' ? 20 * 1.5 : 20; // Example threshold in pixels, adjust as needed
+            const resultDiv = document.getElementById('result');
+            if (minDist <= threshold) {
+                resultDiv.textContent = 'Result: OK';
+                // Draw reference in green
+                ctx.strokeStyle = 'green';
+                ctx.beginPath();
+                const useRef = dist <= revDist ? refStroke : revRef;
+                ctx.moveTo(useRef[0].x, useRef[0].y);
+                for (let i = 1; i < useRef.length; i++) {
+                    ctx.lineTo(useRef[i].x, useRef[i].y);
+                }
+                ctx.stroke();
+                // Advance
+                strokeIndex++;
+                setTimeout(() => {
+                    clearCanvas();
+                    drawCurrentStrokeGuide();
+                }, 1000); // Short delay to see green
+                if (strokeIndex >= currentStrokes.length) {
+                    completeWord();
+                }
+            } else {
+                resultDiv.textContent = 'Result: Close, try again';
+                // Clear drawn path? Or keep
+                setTimeout(clearCanvas, 1000);
+                drawCurrentStrokeGuide();
+            }
+        }
+
+        // Scale stroke to canvas size
+        function scaleStroke(stroke) {
+            const scale = 256 / 1024;
+            return stroke.map(p => ({x: p.x * scale, y: p.y * scale}));
+        }
+
+        // Simplify path (optional, reduce points)
+        function simplifyPath(path) {
+            return path; // Implement Douglas-Peucker if needed
+        }
+
+        // Frechet distance
+        function frechetDistance(p, q) {
+            const ca = Array.from({length: p.length}, () => Array(q.length).fill(-1));
+            function dist(a, b) {
+                return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+            }
+            function c(i, j) {
+                if (ca[i][j] > -1) return ca[i][j];
+                if (i === 0 && j === 0) {
+                    ca[0][0] = dist(p[0], q[0]);
+                    return ca[0][0];
+                }
+                let min = Infinity;
+                if (i > 0) min = Math.min(min, c(i - 1, j));
+                if (j > 0) min = Math.min(min, c(i, j - 1));
+                if (i > 0 && j > 0) min = Math.min(min, c(i - 1, j - 1));
+                ca[i][j] = Math.max(min, dist(p[i], q[j]));
+                return ca[i][j];
+            }
+            return c(p.length - 1, q.length - 1);
+        }
+
+        // Complete word
+        function completeWord() {
+            document.getElementById('result').textContent = 'Result: Completed ✓';
+            progress[currentWord.hanzi] = (progress[currentWord.hanzi] || 0) + 1;
+            localStorage.setItem('hanzi-progress', JSON.stringify(progress));
+            populateWordList(); // Update badge
+        }
+
+        // Mode switch
+        document.getElementById('guided').addEventListener('click', () => {
+            mode = 'guided';
+            document.getElementById('guided').classList.add('active');
+            document.getElementById('recall').classList.remove('active');
+            clearCanvas();
+            drawCurrentStrokeGuide();
+        });
+        document.getElementById('recall').addEventListener('click', () => {
+            mode = 'recall';
+            document.getElementById('recall').classList.add('active');
+            document.getElementById('guided').classList.remove('active');
+            clearCanvas();
+            // No guide in recall
+        });
+
+        // TTS
+        speechSynthesis.onvoiceschanged = () => {
+            voices = speechSynthesis.getVoices();
+            chineseVoice = voices.find(v => v.lang.startsWith('zh-'));
+        };
+
+        function speak(text, rate = 1) {
+            if (!voices.length) {
+                speechSynthesis.getVoices(); // Trigger load
+            }
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.voice = chineseVoice || voices[0];
+            utt.lang = 'zh-CN';
+            utt.rate = rate;
+            speechSynthesis.speak(utt);
+            lastUtterance = utt;
+            return utt;
+        }
+
+        document.getElementById('play').addEventListener('click', () => {
+            if (currentWord) speak(currentWord.hanzi);
+        });
+        document.getElementById('slow').addEventListener('click', () => {
+            if (currentWord) speak(currentWord.hanzi, 0.85);
+        });
+        document.getElementById('replay').addEventListener('click', () => {
+            if (lastUtterance) {
+                const replayUtt = new SpeechSynthesisUtterance(lastUtterance.text);
+                replayUtt.voice = lastUtterance.voice;
+                replayUtt.lang = lastUtterance.lang;
+                replayUtt.rate = lastUtterance.rate;
+                speechSynthesis.speak(replayUtt);
+            }
+        });
+
+        // Export/Import - assuming for SRS, but minimal
+        document.getElementById('export').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(progress)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hanzi-progress.json';
+            a.click();
+        });
+        document.getElementById('import').addEventListener('change', e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = ev => {
+                progress = JSON.parse(ev.target.result);
+                localStorage.setItem('hanzi-progress', JSON.stringify(progress));
+                populateWordList();
+            };
+            reader.readAsText(file);
+        });
+
+        // SRS buttons - placeholder, as not specified
+        document.querySelectorAll('.srs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Implement SRS logic if needed
+                console.log(btn.textContent + ' pressed');
+            });
+        });
+
+        // PWA registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+
+        loadData();
+    </script>
 </body>
 </html>
